@@ -15,11 +15,12 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var (
-		listen  = flag.String("listen", "", "listen address for socks agents address:port")
-		cert    = flag.String("cert", "", "certificate file")
-		key     = flag.String("key", "", "private key file")
-		socks   = flag.String("socks", "127.0.0.1:1080", "listen address for socks server address:port")
-		connect = flag.String("connect", "", "connect address for socks agent address:port")
+		listen   = flag.String("listen", "", "listen address for socks agents address:port")
+		cert     = flag.String("cert", "", "certificate file")
+		key      = flag.String("key", "", "private key file")
+		socks    = flag.String("socks", "127.0.0.1:1080", "listen address for socks server address:port")
+		connect  = flag.String("connect", "", "connect address for socks agent address:port")
+		insecure = flag.Bool("k", false, "Allow insecure server connections")
 	)
 	flag.Parse()
 
@@ -32,15 +33,15 @@ func main() {
 		ListenForAgent(*listen, *socks, cer)
 	} else if *connect != "" {
 		log.Println("Connecting to socks server")
-		ReverseSocksAgent(*connect)
+		ReverseSocksAgent(*connect, *insecure)
 	} else {
 		flag.PrintDefaults()
 	}
 }
 
 // Start a socks5 server and tunnel the traffic to the server at address.
-func ReverseSocksAgent(address string) {
-	config := &tls.Config{InsecureSkipVerify: true}
+func ReverseSocksAgent(address string, insecure bool) {
+	config := &tls.Config{InsecureSkipVerify: insecure}
 	conn, err := tls.Dial("tcp", address, config)
 	if err != nil {
 		log.Fatalln(err.Error())

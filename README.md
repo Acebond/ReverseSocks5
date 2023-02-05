@@ -11,9 +11,9 @@ This will open the socks5 port on `127.0.0.1:1080` and listen for an agent on `:
 
 ## Start Client/Agent
 ```
-ReverseSocks5 -connect "server.goes.here:10443"
+ReverseSocks5 -connect "server.goes.here:10443 -k"
 ```
-This will connect to the server and be the egress point for the socks5 traffic, effectively exposing the internal network of the client/agent to anyone who can access the socks5 port on the server.
+This will connect to the server and be the egress point for the socks5 traffic, effectively exposing the internal network of the client/agent to anyone who can access the socks5 port on the server. Note that `-k` accepts any certificate presented by the server and any host name in that certificate.
 
 ## Generate Self-Signed Certificate
 ```
