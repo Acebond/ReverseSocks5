@@ -8,7 +8,7 @@ import (
 	"net"
 
 	"github.com/hashicorp/yamux"
-	socks5 "github.com/things-go/go-socks5"
+	"github.com/things-go/go-socks5"
 )
 
 func main() {
@@ -24,8 +24,15 @@ func main() {
 	)
 	flag.Parse()
 
-	if *listen != "" && *cert != "" && *key != "" {
-		cer, err := tls.LoadX509KeyPair(*cert, *key)
+	if *listen != "" {
+		var cer tls.Certificate
+		var err error
+		if *cert != "" && *key != "" {
+			cer, err = tls.LoadX509KeyPair(*cert, *key)
+		} else {
+			log.Println("Generating a self-signed X.509 certificate")
+			cer, err = MakeCert()
+		}
 		if err != nil {
 			log.Fatalln(err.Error())
 		}
@@ -46,6 +53,7 @@ func ReverseSocksAgent(address string, insecure bool) {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+	log.Println("Connected")
 
 	session, err := yamux.Server(conn, nil)
 	if err != nil {
