@@ -7,9 +7,9 @@ Reverse socks5 proxy over TLS in Golang using https://github.com/things-go/go-so
 ```
 Usage: ReverseSocks5 server [flags]
   -cert string
-        Certificate filepath for the socks server (default "CreateCertificate")
+        Certificate file for the socks server (default "CreateCertificate")
   -key string
-        Private key filepath for the socks server (default "GenerateKey")
+        Private key file for the socks server (default "GenerateKey")
   -listen string
         Listen address for socks agents address:port (default ":10443")
   -socks string
@@ -22,7 +22,7 @@ ReverseSocks5 server -socks "127.0.0.1:1080" -listen ":10443" -cert localhost.pe
 ```
 This will open the socks5 port on `127.0.0.1:1080` and listen for an agent on `:10443`. Note the socks5 port will only be accessible once an agent connects. If no certificate and private key are provided, ReverseSocks5 will generate a self-signed certificate.
 
-## Start Client/Agent
+## Start Agent
 ```
 Usage: ReverseSocks5 agent [flags]
   -connect string
@@ -36,7 +36,7 @@ ReverseSocks5 agent -connect "server.goes.here:10443" -k
 OR
 ReverseSocks5 agent -connect "server.goes.here:10443" -k -proxy "http://internal.network.proxy:8080"
 ```
-This will connect to the server and be the egress point for the socks5 traffic, effectively exposing the internal network of the client/agent to anyone who can access the socks5 port on the server. Note that `-k` accepts any certificate presented by the server and any host name in that certificate, this is required if self-signed certificates are used.
+This will connect to the server and be the egress point for the socks5 traffic, effectively exposing the internal network of the agent to anyone who can access the socks5 port on the server. Note that `-k` accepts any certificate presented by the server and any host name in that certificate, this is required if self-signed certificates are used.
 
 ## Optionally Generate Self-Signed Certificate using OpenSSL
 ```

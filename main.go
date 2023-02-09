@@ -33,8 +33,8 @@ func main() {
 	var (
 		serverCmd = flag.NewFlagSet("server", flag.ExitOnError)
 		listen    = serverCmd.String("listen", ":10443", "Listen address for socks agents address:port")
-		cert      = serverCmd.String("cert", "CreateCertificate", "Certificate filepath for the socks server")
-		key       = serverCmd.String("key", "GenerateKey", "Private key filepath for the socks server")
+		cert      = serverCmd.String("cert", "CreateCertificate", "Certificate file for the socks server")
+		key       = serverCmd.String("key", "GenerateKey", "Private key file for the socks server")
 		socks     = serverCmd.String("socks", "127.0.0.1:1080", "Listen address for socks server address:port")
 		agentCmd  = flag.NewFlagSet("agent", flag.ExitOnError)
 		connect   = agentCmd.String("connect", "", "Connect address for socks agent address:port")
