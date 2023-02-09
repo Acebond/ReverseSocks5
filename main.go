@@ -194,9 +194,7 @@ func TunnelServer(listen string, session *yamux.Session) {
 
 func ListenForAgent(address, socks string, cert tls.Certificate) {
 	config := &tls.Config{
-		PreferServerCipherSuites: true,
-		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
-		Certificates:             []tls.Certificate{cert},
+		Certificates: []tls.Certificate{cert},
 	}
 	ln, err := tls.Listen("tcp", address, config)
 	if err != nil {
