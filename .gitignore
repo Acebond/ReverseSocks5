@@ -13,6 +13,7 @@
 
 # Dependency directories (remove the comment below to include it)
 keys/
+.vscode/
 
 # Go workspace file
 go.work
