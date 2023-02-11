@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -162,8 +163,12 @@ func TunnelServer(listen string, session *yamux.Session) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Println(err.Error())
-			break
+			if errors.Is(err, net.ErrClosed) {
+				break
+			} else {
+				log.Println(err.Error())
+				continue
+			}
 		}
 
 		stream, err := session.Open()
