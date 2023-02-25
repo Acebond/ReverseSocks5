@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hashicorp/yamux"
+	"github.com/Acebond/gomux"
 	"github.com/magisterquis/connectproxy"
 	"github.com/things-go/go-socks5"
 	"golang.org/x/net/proxy"
@@ -123,7 +123,7 @@ func ReverseSocksAgent(address, proxyString string, insecure bool) {
 }
 
 func AgentRun(conn net.Conn) {
-	session, err := yamux.Server(conn, nil)
+	session, err := gomux.Server(conn)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -131,7 +131,7 @@ func AgentRun(conn net.Conn) {
 	server := socks5.NewServer()
 
 	for {
-		stream, err := session.Accept()
+		stream, err := session.AcceptStream()
 		if err != nil {
 			log.Println(err.Error())
 			break
@@ -146,14 +146,13 @@ func AgentRun(conn net.Conn) {
 		}()
 	}
 
-	// This will call conn.Close() see https://github.com/hashicorp/yamux/blob/master/session.go#L289
 	if err := session.Close(); err != nil {
 		log.Println(err.Error())
 	}
 }
 
 // Accepts connections and tunnels the traffic to the SOCKS server running on the client.
-func TunnelServer(listen string, session *yamux.Session) {
+func TunnelServer(listen string, session *gomux.Mux) {
 	log.Println("Listening for socks clients on " + listen)
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
@@ -171,7 +170,7 @@ func TunnelServer(listen string, session *yamux.Session) {
 			}
 		}
 
-		stream, err := session.Open()
+		stream, err := session.OpenStream()
 		if err != nil {
 			conn.Close()
 			log.Println(err.Error())
@@ -213,7 +212,7 @@ func ListenForAgent(address, socks string, cert tls.Certificate) {
 			break
 		}
 
-		session, err := yamux.Client(conn, nil)
+		session, err := gomux.Client(conn)
 		if err != nil {
 			conn.Close()
 			log.Println(err.Error())
