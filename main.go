@@ -29,6 +29,9 @@ func Usage(serverCmd, agentCmd *flag.FlagSet) {
 }
 
 func main() {
+	const version = 0.3
+	fmt.Printf("ReverseSocks5 v%v\n\n", version)
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var (

@@ -1,5 +1,5 @@
 # ReverseSocks5
-Reverse socks5 proxy over TLS in Golang using https://github.com/things-go/go-socks5 and https://github.com/hashicorp/yamux. Could be useful to bypass firewalls.
+Reverse socks5 proxy over TLS in Golang using https://github.com/things-go/go-socks5 and https://github.com/Acebond/gomux. Could be useful to bypass firewalls.
 
 # Usage
 

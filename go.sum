@@ -1,7 +1,7 @@
-github.com/Acebond/gomux v0.0.0-20230218045208-326a149a1d84 h1:iNH++nLKB6rYQbFjyPt2VqtYgoHjugpTIjsoJC9aSyw=
-github.com/Acebond/gomux v0.0.0-20230218045208-326a149a1d84/go.mod h1:xi0dxlhnxyBRHASK2VTOXjpteXmDrgVEFMi18Sel9BQ=
 github.com/Acebond/gomux v0.0.0-20230225133448-a46c896d8855 h1:RIIjG6EzQ+7bijL6Kv4hahPsjBQ1bcItgJCuD6BNp+s=
 github.com/Acebond/gomux v0.0.0-20230225133448-a46c896d8855/go.mod h1:xi0dxlhnxyBRHASK2VTOXjpteXmDrgVEFMi18Sel9BQ=
+github.com/Acebond/gomux v0.0.0-20230228100551-a1fbc5507ec6 h1:dXaOkZ/Qz0nzRGcjFXOUuoIsBHRYvjJ3i9m8oz2Mp+s=
+github.com/Acebond/gomux v0.0.0-20230228100551-a1fbc5507ec6/go.mod h1:xi0dxlhnxyBRHASK2VTOXjpteXmDrgVEFMi18Sel9BQ=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b h1:xZ59n7Frzh8CwyfAapUZLSg+gXH5m63YEaFCMpDHhpI=
 github.com/magisterquis/connectproxy v0.0.0-20200725203833-3582e84f0c9b/go.mod h1:uDd4sYVYsqcxAB8j+Q7uhL6IJCs/r1kxib1HV4bgOMg=
