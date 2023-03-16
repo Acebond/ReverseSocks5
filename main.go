@@ -71,7 +71,7 @@ func ReverseSocksAgent(serverAddress, psk string) {
 			break
 		}
 		go func() {
-			if err := server.ServeConn(stream); err != nil {
+			if err := server.ServeConn(stream); err != nil && err != gomux.ErrPeerClosedStream {
 				log.Println(err.Error())
 			}
 			if err := stream.Close(); err != nil {
