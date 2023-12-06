@@ -14,7 +14,7 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	const version = 0.4
+	const version = 0.5
 	log.Printf("ReverseSocks5 v%v\n", version)
 
 	defaultPassword := "password"
