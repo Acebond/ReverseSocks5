@@ -35,3 +35,8 @@ This will open the SOCKS5 port on `127.0.0.1:1080` and listen for an agent on `:
 ## Start Agent
 ![Example starting the agent](imgs/run_agent.png)
 This will connect to the server and be the egress point for the SOCKS5 traffic, effectively exposing the internal network of the agent to anyone who can access the SOCKS5 port on the server.
+
+## Configure a Proxy
+![Example proxy configuration](imgs/configure_proxy.png)
+This will cause Firefox (using the Proxy SwitchyOmega extension) to make all connections using the SOCKS5 server. On Linux a common tool to access the SOCKS5 proxy would be proxychains4.
+
