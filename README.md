@@ -38,5 +38,4 @@ This will connect to the server and be the egress point for the SOCKS5 traffic, 
 
 ## Configure a Proxy
 ![Example proxy configuration](imgs/configure_proxy.png)
-This will cause Firefox (using the Proxy SwitchyOmega extension) to make all connections using the SOCKS5 server. On Linux a common tool to access the SOCKS5 proxy would be proxychains4.
-
+Note that Firefox is running on the same machine as the SOCKS5 server. This will cause Firefox (using the Proxy SwitchyOmega extension) to make all connections using the SOCKS5 server. On Linux, a common tool to access the SOCKS5 proxy is `proxychains4`.
