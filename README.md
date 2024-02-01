@@ -6,6 +6,9 @@ Build with garble to help avoid AV detections, or don't, but Defender will proba
 ```
 go install mvdan.cc/garble@latest
 garble -tiny build .
+
+# Cross-compile for Linux from Windows
+$Env:GOOS = "linux"; $Env:GOARCH = "amd64"; garble -tiny build .
 ```
 
 ## Usage
@@ -26,17 +29,18 @@ Usage of ReverseSocks5.exe:
 ```
 
 ## Start Server
-```
-./ReverseSocks5
-OR 
-./ReverseSocks5 -socks "127.0.0.1:1080" -listen ":10443" -psk "ChangeMe"
-```
+![Example starting the server](imgs/run_server.png)
 This will open the socks5 port on `127.0.0.1:1080` and listen for an agent on `:10443`. Note the socks5 port will only be accessible once an agent connects.
+### Example /w Agent/Server Encryption and SOCKS5 Username/Password Auth
+```
+./ReverseSocks5 -psk "ChangeMe" -password test -username test
+```
+
 
 ## Start Agent
+![Example starting the agent](imgs/run_agent.png)
+This will connect to the server and be the egress point for the socks5 traffic, effectively exposing the internal network of the agent to anyone who can access the socks5 port on the server.
+### Example /w Agent/Server Encryption
 ```
-./ReverseSocks5.exe -connect 172.21.48.1:10443
-OR
 ./ReverseSocks5.exe -connect 172.21.48.1:10443 -psk "ChangeMe"
 ```
-This will connect to the server and be the egress point for the socks5 traffic, effectively exposing the internal network of the agent to anyone who can access the socks5 port on the server.
