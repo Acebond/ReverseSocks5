@@ -5,28 +5,34 @@ import (
 	"flag"
 	"io"
 	"log"
+	"math"
 	"net"
 	"sync"
 
-	"github.com/Acebond/gomux"
-	"github.com/things-go/go-socks5"
+	"github.com/Acebond/ReverseSocks5/bufferpool"
+	"github.com/Acebond/ReverseSocks5/mux"
+	"github.com/Acebond/ReverseSocks5/statute"
+)
+
+var (
+	bufferPool = bufferpool.NewPool(math.MaxUint16)
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	const version = 0.5
+	const version = 2.0
 	log.Printf("ReverseSocks5 v%v\n", version)
-
-	defaultPassword := "password"
 
 	listen := flag.String("listen", ":10443", "Listen address for socks agents address:port")
 	socks := flag.String("socks", "127.0.0.1:1080", "Listen address for socks server address:port")
-	psk := flag.String("psk", defaultPassword, "Pre-shared key for encryption and authentication")
+	psk := flag.String("psk", "password", "Pre-shared key for encryption and authentication between the agent and server")
 	connect := flag.String("connect", "", "Connect address for socks agent address:port")
+	username := flag.String("username", "", "Username used for SOCKS5 authentication")
+	password := flag.String("password", "", "Password used for SOCKS5 authentication. No authentication required if not configured.")
 	flag.Parse()
 
 	if *connect == "" {
-		ReverseSocksServer(*listen, *socks, *psk)
+		ReverseSocksServer(*listen, *socks, *psk, *username, *password)
 	} else {
 		ReverseSocksAgent(*connect, *psk)
 	}
@@ -41,8 +47,7 @@ func ReverseSocksAgent(serverAddress, psk string) {
 	}
 	log.Println("Connected")
 
-	session := gomux.Server(conn, psk)
-	server := socks5.NewServer()
+	session := mux.Server(conn, psk)
 
 	for {
 		stream, err := session.AcceptStream()
@@ -51,21 +56,21 @@ func ReverseSocksAgent(serverAddress, psk string) {
 			break
 		}
 		go func() {
-			if err := server.ServeConn(stream); err != nil && err != gomux.ErrPeerClosedStream {
-				log.Println(err.Error())
-			}
-			if err := stream.Close(); err != nil {
+			// Note ServeConn() will take overship of stream and close it.
+			if err := ServeConn(stream); err != nil && err != mux.ErrPeerClosedStream {
 				log.Println(err.Error())
 			}
 		}()
 	}
 
-	if err := session.Close(); err != nil {
-		log.Println(err.Error())
-	}
+	session.Close()
 }
 
-func ReverseSocksServer(agentListenAddress, socksListenAddress, psk string) {
+func ReverseSocksServer(agentListenAddress, socksListenAddress, psk, username, password string) {
+	if len(password) == 0 {
+		log.Println("WARNING: No password configured, anyone will be able to connect to the SOCKS5 server.")
+	}
+
 	log.Println("Listening for socks agents on " + agentListenAddress)
 	ln, err := net.Listen("tcp", agentListenAddress)
 	if err != nil {
@@ -79,25 +84,30 @@ func ReverseSocksServer(agentListenAddress, socksListenAddress, psk string) {
 			log.Println(err.Error())
 			continue
 		}
-		session := gomux.Client(conn, psk)
-		TunnelServer(socksListenAddress, session)
+		session := mux.Client(conn, psk)
+		TunnelServer(socksListenAddress, username, password, session)
+		session.Close()
 	}
 }
 
 // Accepts connections and tunnels the traffic to the SOCKS server running on the client.
-func TunnelServer(listenAddress string, session *gomux.Mux) {
+func TunnelServer(listenAddress, username, password string, session *mux.Mux) {
 	log.Println("Listening for socks clients on " + listenAddress)
-	addr, err := net.ResolveTCPAddr("tcp", listenAddress)
+
+	ln, err := net.Listen("tcp", listenAddress)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	ln, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		log.Fatalln(err.Error())
+	defer ln.Close()
+
+	authMethod := Authenticator(&NoAuthAuthenticator{})
+
+	if len(password) > 0 {
+		authMethod = &UserPassAuthenticator{username, password}
 	}
 
 	for {
-		conn, err := ln.AcceptTCP()
+		conn, err := ln.Accept()
 		if err != nil {
 			if errors.Is(err, net.ErrClosed) {
 				break
@@ -115,35 +125,60 @@ func TunnelServer(listenAddress string, session *gomux.Mux) {
 			break
 		}
 
-		go proxy(conn, stream)
-	}
+		go handleSocksClient(conn, stream, authMethod)
 
-	if err := session.Close(); err != nil {
-		log.Println(err.Error())
-	}
-	if err := ln.Close(); err != nil {
-		log.Println(err.Error())
 	}
 }
 
-func proxy(conn1 *net.TCPConn, conn2 *gomux.Stream) {
-	defer conn1.Close()
-	defer conn2.Close()
+func doauth(conn net.Conn, authMethod Authenticator) error {
 
+	// Check its a really SOCKS5 connection
+	mr, err := statute.ParseMethodRequest(conn)
+	if err != nil {
+		return err
+	}
+	if mr.Ver != statute.VersionSocks5 {
+		return statute.ErrNotSupportVersion
+	}
+
+	// Select a usable method
+	for _, method := range mr.Methods {
+		if authMethod.GetCode() == method {
+			return authMethod.Authenticate(conn)
+
+		}
+	}
+
+	// No usable method found
+	conn.Write([]byte{statute.VersionSocks5, statute.MethodNoAcceptable}) //nolint: errcheck
+	return statute.ErrNoSupportedAuth
+}
+
+func handleSocksClient(conn net.Conn, stream net.Conn, authMethod Authenticator) {
+	defer conn.Close()
+	defer stream.Close()
+
+	if err := doauth(conn, authMethod); err != nil {
+		log.Printf("failed to authenticate: %v", err.Error())
+		return
+	}
+
+	// Proxy the data
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	go func() {
-		defer wg.Done()
-		io.Copy(conn1, conn2)
-		// Signal peer that no more data is coming.
-		conn1.CloseWrite()
+		buf := bufferPool.Get()
+		defer bufferPool.Put(buf)
+		io.CopyBuffer(conn, stream, buf[:cap(buf)])
+		// io.Copy(conn, stream)
+		wg.Done()
 	}()
 	go func() {
-		defer wg.Done()
-		io.Copy(conn2, conn1)
-		// Signal peer that no more data is coming.
-		conn2.CloseWrite()
+		buf := bufferPool.Get()
+		defer bufferPool.Put(buf)
+		io.CopyBuffer(stream, conn, buf[:cap(buf)])
+		wg.Done()
 	}()
 
 	wg.Wait()

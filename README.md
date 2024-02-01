@@ -1,5 +1,12 @@
 # ReverseSocks5
-Reverse socks5 proxy Golang. Could be useful to bypass firewalls.
+Reverse SOCKS5 proxy in Golang. Could be useful to bypass firewalls.
+
+## Build
+Build with garble to help avoid AV detections, or don't, but Defender will probably destroy the binary and get angry.
+```
+go install mvdan.cc/garble@latest
+garble -tiny build .
+```
 
 ## Usage
 ```
@@ -8,12 +15,15 @@ Usage of ReverseSocks5.exe:
         Connect address for socks agent address:port
   -listen string
         Listen address for socks agents address:port (default ":10443")
+  -password string
+        Password used for SOCKS5 authentication. No authentication required if not configured.
   -psk string
-        Pre-shared key for encryption and authentication (default "password")
+        Pre-shared key for encryption and authentication between the agent and server (default "password")
   -socks string
         Listen address for socks server address:port (default "127.0.0.1:1080")
+  -username string
+        Username used for SOCKS5 authentication
 ```
-
 
 ## Start Server
 ```
