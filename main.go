@@ -19,9 +19,8 @@ var (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	const version = 2.0
-	log.Printf("ReverseSocks5 v%v\n", version)
+	const version = "v2.0.0"
+	log.Printf("ReverseSocks5 %v\n", version)
 
 	listen := flag.String("listen", ":10443", "Listen address for socks agents address:port")
 	socks := flag.String("socks", "127.0.0.1:1080", "Listen address for socks server address:port")
@@ -30,6 +29,8 @@ func main() {
 	username := flag.String("username", "", "Username used for SOCKS5 authentication")
 	password := flag.String("password", "", "Password used for SOCKS5 authentication. No authentication required if not configured.")
 	flag.Parse()
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	if *connect == "" {
 		ReverseSocksServer(*listen, *socks, *psk, *username, *password)
