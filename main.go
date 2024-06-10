@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"errors"
 	"flag"
 	"io"
@@ -26,23 +27,36 @@ func main() {
 	socks := flag.String("socks", "127.0.0.1:1080", "Listen address for socks server address:port")
 	psk := flag.String("psk", "password", "Pre-shared key for encryption and authentication between the agent and server")
 	connect := flag.String("connect", "", "Connect address for socks agent address:port")
+	connectTLS := flag.Bool("tls", false, "Connect with TLS instead of TCP, the server must be using certificates")
 	username := flag.String("username", "", "Username used for SOCKS5 authentication")
 	password := flag.String("password", "", "Password used for SOCKS5 authentication. No authentication required if not configured.")
+	cert := flag.String("cert", "", "certificate file")
+	key := flag.String("key", "", "private key file")
+
 	flag.Parse()
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	if *connect == "" {
-		ReverseSocksServer(*listen, *socks, *psk, *username, *password)
+		ReverseSocksServer(*listen, *socks, *psk, *cert, *key, *username, *password)
 	} else {
-		ReverseSocksAgent(*connect, *psk)
+		ReverseSocksAgent(*connect, *psk, *connectTLS)
 	}
 }
 
 // Start a socks5 server and tunnel the traffic to the server at address.
-func ReverseSocksAgent(serverAddress, psk string) {
+func ReverseSocksAgent(serverAddress, psk string, useTLS bool) {
 	log.Println("Connecting to socks server at " + serverAddress)
-	conn, err := net.Dial("tcp", serverAddress)
+
+	var conn net.Conn
+	var err error
+
+	if useTLS {
+		conn, err = tls.Dial("tcp", serverAddress, nil)
+	} else {
+		conn, err = net.Dial("tcp", serverAddress)
+	}
+
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -67,13 +81,38 @@ func ReverseSocksAgent(serverAddress, psk string) {
 	session.Close()
 }
 
-func ReverseSocksServer(agentListenAddress, socksListenAddress, psk, username, password string) {
+func ReverseSocksServer(agentListenAddress, socksListenAddress, psk, certFile, keyFile, username, password string) {
+	usingTLS := false
+	var cert tls.Certificate
+	var err error
+
+	if certFile != "" && keyFile != "" {
+		cert, err = tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			log.Println("Certificate and/or private key not provided, using TCP listener")
+		} else {
+			usingTLS = true
+		}
+	}
+
 	if len(password) == 0 {
 		log.Println("WARNING: No password configured, anyone will be able to connect to the SOCKS5 server.")
 	}
 
 	log.Println("Listening for socks agents on " + agentListenAddress)
-	ln, err := net.Listen("tcp", agentListenAddress)
+
+	var ln net.Listener
+	if usingTLS {
+		config := &tls.Config{
+			PreferServerCipherSuites: true,
+			CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+			Certificates:             []tls.Certificate{cert},
+		}
+		ln, err = tls.Listen("tcp", agentListenAddress, config)
+	} else {
+		ln, err = net.Listen("tcp", agentListenAddress)
+	}
+
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
