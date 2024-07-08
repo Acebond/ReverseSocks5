@@ -20,7 +20,7 @@ var (
 )
 
 func main() {
-	const version = "v2.0.0"
+	const version = "v2.0.1"
 	log.Printf("ReverseSocks5 %v\n", version)
 
 	listen := flag.String("listen", ":10443", "Listen address for socks agents address:port")
