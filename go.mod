@@ -1,7 +1,7 @@
 module github.com/Acebond/ReverseSocks5
 
-go 1.21.4
+go 1.23.2
 
-require golang.org/x/crypto v0.18.0
+require golang.org/x/crypto v0.32.0
 
-require golang.org/x/sys v0.16.0 // indirect
+require golang.org/x/sys v0.29.0 // indirect

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"errors"
 	"flag"
@@ -9,6 +10,7 @@ import (
 	"math"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/Acebond/ReverseSocks5/bufferpool"
 	"github.com/Acebond/ReverseSocks5/mux"
@@ -16,11 +18,21 @@ import (
 )
 
 var (
-	bufferPool = bufferpool.NewPool(math.MaxUint16)
+	bufferPool  = bufferpool.NewPool(math.MaxUint16)
+	magicPacket = [64]byte{
+		0x6a, 0x1d, 0x3e, 0x74, 0x8b, 0x99, 0x5a, 0x7f,
+		0xca, 0xef, 0x33, 0x88, 0xac, 0x44, 0x52, 0xbd,
+		0x1e, 0x5f, 0x39, 0xd4, 0x6c, 0xb3, 0x72, 0xf8,
+		0x21, 0x9d, 0x54, 0x68, 0x91, 0xab, 0x43, 0xee,
+		0x4c, 0x7a, 0x90, 0x26, 0xf7, 0x35, 0x9b, 0x5e,
+		0xd1, 0x88, 0x4f, 0xbc, 0x2a, 0x67, 0x91, 0xe4,
+		0xaf, 0x34, 0xcd, 0x89, 0x60, 0x18, 0xa2, 0xde,
+		0x77, 0x93, 0xfb, 0x02, 0x6e, 0x11, 0xc3, 0xf0,
+	}
 )
 
 func main() {
-	const version = "v2.0.1"
+	const version = "v2.1.0"
 	log.Printf("ReverseSocks5 %v\n", version)
 
 	listen := flag.String("listen", ":10443", "Listen address for socks agents address:port")
@@ -60,6 +72,12 @@ func ReverseSocksAgent(serverAddress, psk string, useTLS bool) {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+
+	_, err = conn.Write(magicPacket[:])
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+
 	log.Println("Connected")
 
 	session := mux.Server(conn, psk)
@@ -124,6 +142,25 @@ func ReverseSocksServer(agentListenAddress, socksListenAddress, psk, certFile, k
 			log.Println(err.Error())
 			continue
 		}
+
+		log.Printf("Agent connected from: %s\n", conn.RemoteAddr().String())
+
+		deadline := time.Now().Add(time.Second * 5)
+		conn.SetReadDeadline(deadline)
+		buffer := make([]byte, 64)
+		n, err := conn.Read(buffer)
+		if err != nil {
+			log.Println("Error reading magic packet:", err)
+			continue
+		}
+		if n == len(magicPacket) && bytes.Equal(buffer, magicPacket[:]) {
+			log.Println("Agent Connected!")
+		} else {
+			log.Println("Client did not sent the magic packet in time")
+			continue
+		}
+		conn.SetReadDeadline(time.Time{})
+
 		session := mux.Client(conn, psk)
 		TunnelServer(socksListenAddress, username, password, session)
 		session.Close()
