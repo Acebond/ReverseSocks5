@@ -156,7 +156,7 @@ func ReverseSocksServer(agentListenAddress, socksListenAddress, psk, certFile, k
 		if n == len(magicPacket) && bytes.Equal(buffer, magicPacket[:]) {
 			log.Println("Agent Connected!")
 		} else {
-			log.Println("Client did not sent the magic packet in time")
+			log.Println("Client did not send the magic packet in time")
 			continue
 		}
 		conn.SetReadDeadline(time.Time{})
