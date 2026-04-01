@@ -32,7 +32,7 @@ var (
 )
 
 func main() {
-	const version = "v2.1.0"
+	const version = "v2.2.0"
 	log.Printf("ReverseSocks5 %v\n", version)
 
 	listen := flag.String("listen", ":10443", "Listen address for socks agents address:port")
@@ -42,8 +42,8 @@ func main() {
 	connectTLS := flag.Bool("tls", false, "Connect with TLS instead of TCP, the server must be using certificates")
 	username := flag.String("username", "", "Username used for SOCKS5 authentication")
 	password := flag.String("password", "", "Password used for SOCKS5 authentication. No authentication required if not configured.")
-	cert := flag.String("cert", "", "certificate file")
-	key := flag.String("key", "", "private key file")
+	cert := flag.String("cert", "", "Certificate file if using TLS on the server")
+	key := flag.String("key", "", "Private key file if using TLS on the server")
 
 	flag.Parse()
 
