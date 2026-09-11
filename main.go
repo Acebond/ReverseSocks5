@@ -32,7 +32,7 @@ var (
 )
 
 func main() {
-	const version = "v2.2.0"
+	const version = "v2.3.0"
 	log.Printf("ReverseSocks5 %v\n", version)
 
 	listen := flag.String("listen", ":10443", "Listen address for socks agents address:port")
@@ -40,6 +40,7 @@ func main() {
 	psk := flag.String("psk", "password", "Pre-shared key for encryption and authentication between the agent and server")
 	connect := flag.String("connect", "", "Connect address for socks agent address:port")
 	connectTLS := flag.Bool("tls", false, "Connect with TLS instead of TCP, the server must be using certificates")
+	insecure := flag.Bool("k", false, "Skip TLS certificate verification when using -tls (insecure)")
 	username := flag.String("username", "", "Username used for SOCKS5 authentication")
 	password := flag.String("password", "", "Password used for SOCKS5 authentication. No authentication required if not configured.")
 	cert := flag.String("cert", "", "Certificate file if using TLS on the server")
@@ -52,19 +53,21 @@ func main() {
 	if *connect == "" {
 		ReverseSocksServer(*listen, *socks, *psk, *cert, *key, *username, *password)
 	} else {
-		ReverseSocksAgent(*connect, *psk, *connectTLS)
+		ReverseSocksAgent(*connect, *psk, *connectTLS, *insecure)
 	}
 }
 
 // Start a socks5 server and tunnel the traffic to the server at address.
-func ReverseSocksAgent(serverAddress, psk string, useTLS bool) {
+func ReverseSocksAgent(serverAddress, psk string, useTLS, insecure bool) {
 	log.Println("Connecting to socks server at " + serverAddress)
 
 	var conn net.Conn
 	var err error
 
 	if useTLS {
-		conn, err = tls.Dial("tcp", serverAddress, nil)
+		conn, err = tls.Dial("tcp", serverAddress, &tls.Config{
+			InsecureSkipVerify: insecure,
+		})
 	} else {
 		conn, err = net.Dial("tcp", serverAddress)
 	}

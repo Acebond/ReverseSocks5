@@ -8,6 +8,8 @@ Usage of ReverseSocks5.exe:
         Certificate file if using TLS on the server
   -connect string
         Connect address for socks agent address:port
+  -k
+        Skip TLS certificate verification when using -tls (insecure)
   -key string
         Private key file if using TLS on the server
   -listen string
@@ -31,6 +33,12 @@ This will open the SOCKS5 port on `127.0.0.1:1080` and listen for an agent on `:
 ## Start Agent
 ![Example starting the agent](imgs/run_agent.png)
 This will connect to the server and be the egress point for the SOCKS5 traffic, effectively exposing the internal network of the agent to anyone who can access the SOCKS5 port on the server.
+
+To connect with TLS while skipping certificate verification, use:
+```
+ReverseSocks5.exe -connect server:10443 -tls -k
+```
+Certificate verification is enabled by default. The `-k` flag only affects TLS agent connections.
 
 ## Configure a Proxy
 ![Example proxy configuration](imgs/configure_proxy.png)
